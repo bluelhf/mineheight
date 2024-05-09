@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>blue.lhf</groupId>
+    <artifactId>mineheight</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <name>mineheight</name>
+
+    <description>Realistic height in Minecraft</description>
+    <properties>
+        <java.version>17</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>bytecode.space</id>
+            <url>https://repo.bytecode.space/repository/maven-public/</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>kiputyttö-releases</id>
+            <name>Ilari's Project Repository</name>
+            <url>https://maven.lhf.blue/releases</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>ca.bkaw</groupId>
+                <artifactId>paper-nms-maven-plugin</artifactId>
+                <version>1.4.3</version>
+                <executions>
+                    <execution>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <!--<goal>remap</goal>-->
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>blue.lhf</groupId>
+                <artifactId>run-paper-maven-plugin</artifactId>
+                <version>1.1.0</version>
+                <configuration>
+                    <minecraftVersion>1.20.6</minecraftVersion>
+                    <acceptEula>true</acceptEula>
+                    <serverDirectory>run</serverDirectory>
+                    <pluginPath>original-${project.build.finalName}.jar</pluginPath>
+                    <jvmFlags>
+                        <flag>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:6969</flag>
+                    </jvmFlags>
+                </configuration>
+            </plugin>
+        </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
+
+    <repositories>
+        <repository>
+            <id>papermc-repo</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+        <repository>
+            <id>sonatype</id>
+            <url>https://oss.sonatype.org/content/groups/public/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>1.20.6-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>ca.bkaw</groupId>
+            <artifactId>paper-nms</artifactId>
+            <version>1.20.6-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>
