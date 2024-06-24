@@ -39,13 +39,13 @@ public class HeightCommand extends Command {
 
                 final Player target = player.getServer().getPlayer(args[0]);
 
-                if (!player.hasPermission("mineheight.height.others") && !player.equals(target)) {
-                    player.sendMessage("You do not have permission to set other players' heights");
+                if (target == null) {
+                    player.sendMessage("A player with the name '" + args[0] + "' or a similar one could not be found.");
                     return true;
                 }
 
-                if (target == null) {
-                    player.sendMessage("Player not found");
+                if (!player.hasPermission("mineheight.height.others") && !player.equals(target)) {
+                    player.sendMessage("You do not have permission to set other players' heights");
                     return true;
                 }
 
