@@ -19,7 +19,7 @@ public class HeightCommand extends Command {
     @Override
     public @NotNull List<String> tabComplete(@NotNull final CommandSender sender, @NotNull final String alias, @NotNull final String[] args) throws IllegalArgumentException {
         if (!sender.hasPermission("mineheight.height.others")) {
-            return super.tabComplete(sender, alias, args);
+            return emptyList();
         }
 
         if (args.length == 1) return sender.getServer().matchPlayer(args[0]).stream().map(Player::getName).toList();
