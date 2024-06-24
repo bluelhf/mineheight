@@ -35,7 +35,7 @@ public class HeightCommand extends Command {
 
         switch (args.length) {
             case 0 -> new HeightGUI(player).openFor(player);
-            case 1 -> {
+            default -> {
 
                 final Player target = player.getServer().getPlayer(args[0]);
 
