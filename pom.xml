@@ -56,7 +56,7 @@
             <plugin>
                 <groupId>ca.bkaw</groupId>
                 <artifactId>paper-nms-maven-plugin</artifactId>
-                <version>1.4.4</version>
+                <version>1.4.6</version>
                 <executions>
                     <execution>
                         <phase>process-classes</phase>
@@ -71,7 +71,7 @@
                 <artifactId>run-paper-maven-plugin</artifactId>
                 <version>1.1.1</version>
                 <configuration>
-                    <minecraftVersion>1.21</minecraftVersion>
+                    <minecraftVersion>1.21.4</minecraftVersion>
                     <acceptEula>true</acceptEula>
                     <serverDirectory>run</serverDirectory>
                     <pluginPath>original-${project.build.finalName}.jar</pluginPath>
@@ -104,13 +104,13 @@
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>1.21-R0.1-SNAPSHOT</version>
+            <version>1.21.4-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>ca.bkaw</groupId>
             <artifactId>paper-nms</artifactId>
-            <version>1.21-SNAPSHOT</version>
+            <version>1.21.4-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
