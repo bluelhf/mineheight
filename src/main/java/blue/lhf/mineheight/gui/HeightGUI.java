@@ -1,88 +1,33 @@
-package blue.lhf.mineheight;
+package blue.lhf.mineheight.gui;
 
-import blue.lhf.mineheight.util.GUI;
+import blue.lhf.mineheight.MineHeight;
+import blue.lhf.mineheight.model.Height;
+import blue.lhf.mineheight.model.HeightUnit;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.item.component.ResolvableProfile;
-import org.bukkit.NamespacedKey;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
-import org.bukkit.craftbukkit.persistence.CraftPersistentDataContainer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 import static net.minecraft.network.chat.Component.literal;
 import static net.minecraft.network.chat.Component.translatable;
-import static org.bukkit.persistence.PersistentDataType.BOOLEAN;
 
 public class HeightGUI extends GUI<HeightGUI.Data> {
-    public static final NamespacedKey IS_IMPERIAL = new NamespacedKey(MineHeight.getPlugin(MineHeight.class), "is_imperial");
     private final Player target;
-
-    protected static class Data {
-        private final Player player;
-
-        public Data(final Player player) {
-            this.player = player;
-        }
-
-        @Override
-        public String toString() {
-            if (isImperial()) {
-                final long inches = (long) (getHeight() / 2.54);
-                return inches / 12 + "'" + inches % 12 + '"';
-            }
-
-            return Math.round(getHeight()) / 100.0 + " m";
-        }
-
-        public boolean isImperial() {
-            return getPDC().getOrDefault(IS_IMPERIAL, BOOLEAN, false);
-        }
-
-        @NotNull
-        private CraftPersistentDataContainer getPDC() {
-            return player.getBukkitEntity().getPersistentDataContainer();
-        }
-
-        public void setImperial(final boolean isImperial) {
-            getPDC().set(IS_IMPERIAL, BOOLEAN, isImperial);
-        }
-
-        public double getHeight() {
-            final AttributeInstance attribute = player.getAttribute(Attributes.SCALE);
-            return (attribute == null ? 1 : attribute.getValue()) * 180.0;
-        }
-
-        public void setHeight(final double height) {
-            if (getHeight() < 50 || getHeight() > 300) {
-                setHeight0(height); // if we're already out of bounds, don't validate
-                return;
-            }
-
-            setHeight0(Math.min(Math.max(height, 50), 300));
-        }
-
-        private void setHeight0(final double height) {
-            final AttributeInstance attribute = player.getAttribute(Attributes.SCALE);
-            if (attribute != null) attribute.setBaseValue(height / 180.0);
-        }
-    }
-
     private static final ItemStack BACKGROUND = new ItemStack(Items.LIGHT_GRAY_STAINED_GLASS_PANE);
+
     private static final ItemStack METRIC;
     private static final ItemStack IMPERIAL;
-
     static {
         BACKGROUND.set(DataComponents.CUSTOM_NAME, literal(" "));
 
@@ -91,10 +36,18 @@ public class HeightGUI extends GUI<HeightGUI.Data> {
         METRIC.set(DataComponents.PROFILE, new ResolvableProfile(Optional.empty(), Optional.of(new UUID(1024377729289046070L, -7478599100526189515L)),
                     new PropertyMap() {{ put("textures", new Property("textures", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMjU0ODUwMzFiMzdmMGQ4YTRmM2I3ODE2ZWI3MTdmMDNkZTg5YTg3ZjZhNDA2MDJhZWY1MjIyMWNkZmFmNzQ4OCJ9fX0=")); }}));
 
+        METRIC.set(DataComponents.LORE, new ItemLore(List.of(
+                literal("Click ").append(translatable("key.mouse.left")).append(" to use the Metric System").withStyle(style -> style.withItalic(false))
+        )));
+
         IMPERIAL = new ItemStack(Items.PLAYER_HEAD);
         IMPERIAL.set(DataComponents.CUSTOM_NAME, literal("Imperial System").withStyle(style -> style.withItalic(false)));
         IMPERIAL.set(DataComponents.PROFILE, new ResolvableProfile(Optional.empty(), Optional.of(new UUID(4337045925816126718L, -8582199142832821171L)),
                     new PropertyMap() {{ put("textures", new Property("textures", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNGNhYzk3NzRkYTEyMTcyNDg1MzJjZTE0N2Y3ODMxZjY3YTEyZmRjY2ExY2YwY2I0YjM4NDhkZTZiYzk0YjQifX19")); }}));
+
+        IMPERIAL.set(DataComponents.LORE, new ItemLore(List.of(
+                literal("Click ").append(translatable("key.mouse.left")).append(" to use the Imperial System").withStyle(style -> style.withItalic(false))
+        )));
     }
 
     public HeightGUI(final org.bukkit.entity.Player target) {
@@ -133,7 +86,7 @@ public class HeightGUI extends GUI<HeightGUI.Data> {
     @NotNull
     private ItemStack computePlayerHead(final DataContext<Data> dataContext) {
         final ItemStack playerHead = new ItemStack(Items.PLAYER_HEAD);
-        playerHead.set(DataComponents.CUSTOM_NAME, literal(dataContext.data().toString()));
+        playerHead.set(DataComponents.CUSTOM_NAME, literal(dataContext.data().getHeight().toString()).withStyle(style -> style.withItalic(false)));
         playerHead.set(DataComponents.PROFILE, new ResolvableProfile(target.getGameProfile()));
         final boolean imperial = dataContext.data().isImperial();
         playerHead.set(DataComponents.LORE, new ItemLore(List.of(
@@ -160,7 +113,7 @@ public class HeightGUI extends GUI<HeightGUI.Data> {
     protected void onClick(final DataContext<Data> dataContext, final int slotIndex, final int button, @NotNull final ClickType actionType, @NotNull final Player player) {
         if (actionType != ClickType.PICKUP && actionType != ClickType.QUICK_MOVE) return;
         switch (slotIndex) {
-            case  4 -> {
+            case 3, 4 -> {
                 if (dataContext.data().isImperial()) player.playSound(SoundEvents.UI_BUTTON_CLICK.value());
 
                 dataContext.data().setImperial(false);
@@ -168,7 +121,7 @@ public class HeightGUI extends GUI<HeightGUI.Data> {
                 dataContext.menu().setItem(3, revision, computeMetricActivation(dataContext));
                 dataContext.menu().setItem(21, revision, computeImperialActivation(dataContext));
             }
-            case 22 -> {
+            case 21, 22 -> {
                 if (!dataContext.data().isImperial()) player.playSound(SoundEvents.UI_BUTTON_CLICK.value());
 
                 dataContext.data().setImperial(true);
@@ -177,18 +130,18 @@ public class HeightGUI extends GUI<HeightGUI.Data> {
                 dataContext.menu().setItem(21, revision, computeImperialActivation(dataContext));
             }
             case 13 -> {
-                final double height = dataContext.data().getHeight();
+                final Height<?> height = dataContext.data().getHeight();
                 final boolean isImperial = dataContext.data().isImperial();
 
-                final double newHeight = height +
+                final double newHeight = height.metres() +
                         (button == 0 ? 1 : -1)
                                 * (actionType == ClickType.QUICK_MOVE
-                                ? isImperial ? 30.48 : 10
-                                : isImperial ? 2.54 : 1
+                                ? isImperial ? 0.3048 : 0.1
+                                : isImperial ? 0.0254 : 0.01
                         );
 
-                player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 1.0F, (float) (1.0 + ((newHeight - height) / 30.48)));
-                dataContext.data().setHeight(newHeight);
+                player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 1.0F, (float) (1.0 + ((newHeight - height.metres()) / 30.48)));
+                dataContext.data().setHeight(height.withMetres(newHeight));
             }
         }
 
@@ -202,6 +155,29 @@ public class HeightGUI extends GUI<HeightGUI.Data> {
 
     @Override
     protected Data defaultData(final Context context) {
-        return new Data(target);
+        return new Data();
+    }
+
+    protected class Data {
+        private final MineHeight plugin = MineHeight.getPlugin(MineHeight.class);
+
+        public boolean isImperial() {
+            return plugin.getHeight(target).unit() instanceof HeightUnit.FeetAndInches;
+        }
+
+        public void setImperial(final boolean imperial) {
+            plugin.setHeight(target, imperial
+                    ? plugin.getHeight(target).withUnit(HeightUnit.FEET_AND_INCHES)
+                    : plugin.getHeight(target).withUnit(HeightUnit.METRES)
+            );
+        }
+
+        public Height<?> getHeight() {
+            return plugin.getHeight(target);
+        }
+
+        public void setHeight(final Height<?> height) {
+            plugin.setHeight(target, height);
+        }
     }
 }

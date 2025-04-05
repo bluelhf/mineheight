@@ -1,4 +1,4 @@
-package blue.lhf.mineheight.util;
+package blue.lhf.mineheight.gui;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
