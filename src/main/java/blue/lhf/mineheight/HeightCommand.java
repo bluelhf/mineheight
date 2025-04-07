@@ -3,7 +3,6 @@ package blue.lhf.mineheight;
 import blue.lhf.mineheight.gui.HeightGUI;
 import blue.lhf.mineheight.model.Height;
 import blue.lhf.mineheight.model.HeightUnits;
-import blue.lhf.mineheight.util.EveryNth;
 import net.minecraft.server.level.ServerPlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -11,9 +10,11 @@ import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
+import static blue.lhf.mineheight.util.SparseSelector.collectSparsely;
 import static java.util.Collections.emptyList;
 
 @SuppressWarnings("SameReturnValue")
@@ -29,44 +30,47 @@ public class HeightCommand extends Command {
         if (!sender.hasPermission("mineheight.height.others")) {
             return super.tabComplete(sender, alias, args);
         }
-
+        final List<String> suggestions = new ArrayList<>();
         if (args.length == 1) {
-            return sender.getServer().matchPlayer(args[0]).stream()
-                    .map(Player::getName).filter(suggestion -> suggestion.startsWith(args[0])).toList();
+            // Suggest player names or height values
+            sender.getServer().matchPlayer(args[0]).stream()
+                .map(Player::getName)
+                .filter(name -> name.startsWith(args[0]))
+                .forEachOrdered(suggestions::add);
+
+            addHeightSuggestions(args[0], suggestions);
+        } else if (args.length == 2 && sender.getServer().getPlayer(args[0]) != null) {
+            // Suggest height values
+            addHeightSuggestions(args[1], suggestions);
         }
 
-        if (args.length >= 1) {
-            final Deque<String> process = new ArrayDeque<>(Arrays.asList(args));
-            assert process.peek() != null;
+        return suggestions;
+    }
 
-            if (sender.getServer().getPlayer(process.peek()) != null) {
-                process.poll();
-            }
-
-            final String height = process.peek();
-            if (height == null) return emptyList();
-            if (args.length > 2) return emptyList();
-            final List<String> suggestions = new ArrayList<>();
-
-            if (height.matches("^\\d{0,3}")) {
-                suggestions.addAll(Stream.iterate(150, i -> i + 10).limit(7)
-                        .map(i -> i + " cm").filter(suggestion -> suggestion.startsWith(height)).collect(EveryNth.collector(3)));
-            }
-            if (height.matches("^[45678]?'?\\d?\"?")) {
-                suggestions.addAll(Stream.of("5", "6", "7")
-                        .flatMap(ft -> Stream.iterate(0, in -> in <= 9, i -> i + 1).map(in -> ft + "'" + in + "\""))
-                        .filter(suggestion -> suggestion.startsWith(height)).collect(EveryNth.collector(5)));
-            }
-            if (height.matches("[12]?\\.?\\d{0,2}m?")) {
-                suggestions.addAll(Stream.iterate(15, i -> i + 1).limit(7)
-                        .map(i -> String.format("%.1f m", i / 10.0))
-                        .filter(suggestion -> suggestion.startsWith(height)).collect(EveryNth.collector(3)));
-            }
-
-            return suggestions;
+    private void addHeightSuggestions(@NotNull final String heightArg, @NotNull final List<String> suggestions) {
+        final List<String> heightSuggestions = new ArrayList<>();
+        if (heightArg.matches("^\\d{0,3}")) {
+            Stream.iterate(150, i -> i + 1).limit(60)
+                    .map(i -> i + " cm").filter(suggestion -> suggestion.startsWith(heightArg))
+                    .collect(collectSparsely(3))
+                    .forEachRemaining(heightSuggestions::add);
+        }
+        if (heightArg.matches("^[45678]?'?\\d?\"?")) {
+            Stream.of("5", "6", "7")
+                    .flatMap(ft -> Stream.iterate(0, in -> in <= 9, i -> i + 1).map(in -> ft + "'" + in + "\""))
+                    .filter(suggestion -> suggestion.startsWith(heightArg))
+                    .collect(collectSparsely(4))
+                    .forEachRemaining(heightSuggestions::add);
+        }
+        if (heightArg.matches("[12]?\\.?\\d{0,2}m?")) {
+            Stream.iterate(150, i -> i + 1).limit(60)
+                    .map(i -> String.format("%.2f m", i / 100.0))
+                    .filter(suggestion -> suggestion.startsWith(heightArg))
+                    .collect(collectSparsely(5))
+                    .forEachRemaining(heightSuggestions::add);
         }
 
-        return emptyList();
+        heightSuggestions.stream().collect(collectSparsely(8)).forEachRemaining(suggestions::add);
     }
 
     @Override
